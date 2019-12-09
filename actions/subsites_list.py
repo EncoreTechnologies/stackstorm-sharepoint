@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from requests_ntlm import HttpNtlmAuth
 import urlparse
 from lib.base_action import SharepointBaseAction
 
@@ -51,10 +50,9 @@ class SubsitesList(SharepointBaseAction):
         - username: Username to login to sharepoint
 
         Returns:
-        - List: List of Sharepoint subsites
+        - List: List of Sharepoint sites and subsites
         """
-        login_user = domain + "\\" + username
-        user_auth = HttpNtlmAuth(login_user, password)
+        user_auth = self.create_auth_cred(domain, username, password)
 
         result = self.get_sites_list(base_url, user_auth, endpoint)
 

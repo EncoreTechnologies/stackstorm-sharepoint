@@ -86,3 +86,19 @@ class SharePointBaseActionTestCase(BaseActionTestCase):
         mock_request.assert_called_with(test_method, test_endpoint,
                                         auth=test_auth, data=test_payload,
                                         headers=test_headers, verify=test_verify)
+
+    @mock.patch('lib.base_action.HttpNtlmAuth')
+    def test_create_auth_cred(self, mock_auth):
+        action = self.get_action_instance({})
+
+        test_domain = 'dom'
+        test_pass = 'pass'
+        test_user = 'user'
+        test_auth = 'auth'
+
+        mock_auth.return_value = test_auth
+
+        result = action.create_auth_cred(test_domain, test_user, test_pass)
+
+        self.assertEqual(result, test_auth)
+        mock_auth.assert_called_with(test_domain + '\\' + test_user, test_pass)

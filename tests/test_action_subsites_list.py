@@ -141,7 +141,7 @@ class SharepointSubsitesListTest(SharePointBaseActionTestCase):
         ])
 
     @mock.patch('subsites_list.SubsitesList.get_sites_list')
-    @mock.patch('subsites_list.HttpNtlmAuth')
+    @mock.patch('lib.base_action.SharepointBaseAction.create_auth_cred')
     def test_run(self, mock_auth, mock_get_sites_list):
         action = self.get_action_instance({})
 
@@ -161,5 +161,5 @@ class SharepointSubsitesListTest(SharePointBaseActionTestCase):
                             test_pass, test_user)
 
         self.assertEqual(result, expected_result)
-        mock_auth.assert_called_with(test_domain + '\\' + test_user, test_pass)
+        mock_auth.assert_called_with(test_domain, test_user, test_pass)
         mock_get_sites_list.assert_called_with(test_base_url, test_auth, test_endpoint)

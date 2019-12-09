@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from requests_ntlm import HttpNtlmAuth
 from lib.base_action import SharepointBaseAction
 
 
@@ -16,16 +15,15 @@ class DocLibList(SharepointBaseAction):
         Return a list of document libraries on the given site or subsite
 
         Args:
+        - base_url: URL of the base Sharepoint site
         - domain: Domain for the given username
         - password: Password to login to sharepoint
-        - site_url: URL of the base Sharepoint site
         - username: Username to login to sharepoint
 
         Returns:
-        - List: List of Sharepoint Document Libraries
+        - List: List of Sharepoint sites and subsites
         """
-        login_user = domain + "\\" + username
-        user_auth = HttpNtlmAuth(login_user, password)
+        user_auth = self.create_auth_cred(domain, username, password)
 
         result = self.get_doc_libs(site_url, user_auth)
 
