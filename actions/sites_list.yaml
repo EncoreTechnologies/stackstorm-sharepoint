@@ -1,0 +1,24 @@
+---
+name: sites_list
+runner_type: "python-script"
+description: "Return a list of subsites on the given base site"
+enabled: true
+entry_point: sites_list.py
+parameters:
+  base_url:
+    type: string
+    description: "URL of the base Sharepoint site"
+    required: true
+  domain:
+    type: string
+    description: "Domain for the given username"
+    required: true
+  password:
+    type: string
+    description: "Password to login to sharepoint"
+    required: true
+    secret: true
+  username:
+    type: string
+    description: "Username to login to sharepoint"
+    required: true
