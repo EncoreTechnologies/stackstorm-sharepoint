@@ -1,0 +1,24 @@
+---
+name: doc_lib_list
+runner_type: "python-script"
+description: "Return a list of document libraries on the given site"
+enabled: true
+entry_point: doc_lib_list.py
+parameters:
+  domain:
+    type: string
+    description: "Domain for the given username"
+    required: true
+  password:
+    type: string
+    description: "Password to login to sharepoint"
+    required: true
+    secret: true
+  site_url:
+    type: string
+    description: "URL of the base Sharepoint site"
+    required: true
+  username:
+    type: string
+    description: "Username to login to sharepoint"
+    required: true
