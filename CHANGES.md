@@ -1,6 +1,10 @@
 # Change Log
 
-## 0.1.0
+## 1.1.0
+
+- Updated the sites_list, subsites_list, and doc_lib_list actions to optionally save outputs to files.
+
+## 1.0.0
 
 - First release
 - Added the following actions:
