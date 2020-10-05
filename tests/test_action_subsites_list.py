@@ -147,6 +147,9 @@ class SharepointSubsitesListTest(SharePointBaseActionTestCase):
 
         test_base_url = 'https://test.com/'
         test_domain = 'dom'
+        test_output_file = None
+        test_output_file_append = False
+        test_output_type = 'console'
         test_pass = 'pass'
         test_user = 'user'
         test_auth = 'auth'
@@ -157,9 +160,40 @@ class SharepointSubsitesListTest(SharePointBaseActionTestCase):
         mock_auth.return_value = test_auth
         mock_get_sites_list.return_value = expected_result
 
-        result = action.run(test_base_url, test_endpoint, test_domain,
-                            test_pass, test_user)
+        result = action.run(test_base_url, test_domain, test_endpoint, test_output_file,
+                            test_output_file_append, test_output_type, test_pass, test_user)
 
         self.assertEqual(result, expected_result)
         mock_auth.assert_called_with(test_domain, test_user, test_pass)
         mock_get_sites_list.assert_called_with(test_base_url, test_auth, test_endpoint)
+
+    @mock.patch('subsites_list.SubsitesList.get_sites_list')
+    @mock.patch('lib.base_action.SharepointBaseAction.create_auth_cred')
+    @mock.patch('lib.base_action.SharepointBaseAction.save_sites_list_to_file')
+    def test_run_file(self, mock_save, mock_auth, mock_get_sites_list):
+        action = self.get_action_instance({})
+
+        test_base_url = 'https://test.com/'
+        test_domain = 'dom'
+        test_output_file = '/path/to/sites_file.json'
+        test_output_file_append = False
+        test_output_type = 'file'
+        test_pass = 'pass'
+        test_user = 'user'
+        test_auth = 'auth'
+        test_endpoint = 'endp1'
+        test_sites = ['site1', 'site2']
+
+        expected_result = 'result'
+
+        mock_auth.return_value = test_auth
+        mock_get_sites_list.return_value = test_sites
+        mock_save.return_value = expected_result
+
+        result = action.run(test_base_url, test_domain, test_endpoint, test_output_file,
+                            test_output_file_append, test_output_type, test_pass, test_user)
+
+        self.assertEqual(result, expected_result)
+        mock_auth.assert_called_with(test_domain, test_user, test_pass)
+        mock_get_sites_list.assert_called_with(test_base_url, test_auth, test_endpoint)
+        mock_save.assert_called_with(test_sites, test_output_file, test_output_file_append)

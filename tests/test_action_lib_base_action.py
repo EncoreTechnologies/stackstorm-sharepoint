@@ -102,3 +102,45 @@ class SharePointBaseActionTestCase(BaseActionTestCase):
 
         self.assertEqual(result, test_auth)
         mock_auth.assert_called_with(test_domain + '\\' + test_user, test_pass)
+
+    @mock.patch("lib.base_action.json")
+    @mock.patch("lib.base_action.open")
+    def test_save_sites_list_to_file_append(self, mock_open, mock_json):
+        action = self.get_action_instance({})
+
+        test_site_objs = ['site1', 'site2']
+        test_file_path = '/path/to/sites_file.json'
+        test_file_append = True
+        expected_result = 'Output saved to: ' + test_file_path
+
+        m = mock.mock_open(read_data='test data')
+        mock_open.return_value = m.return_value
+        mock_json.loads.return_value = ['site3', 'site4']
+
+        result = action.save_sites_list_to_file(test_site_objs, test_file_path, test_file_append)
+
+        self.assertEqual(result, expected_result)
+        mock_json.loads.assert_called_with('test data')
+        mock_json.dump.assert_called_with(['site3', 'site4', 'site1', 'site2'], m.return_value)
+        mock_open.assert_has_calls(
+            [mock.call(test_file_path, 'r'),
+             mock.call(test_file_path, 'w')])
+
+    @mock.patch("lib.base_action.json")
+    @mock.patch("lib.base_action.open")
+    def test_save_sites_list_to_file_overwrite(self, mock_open, mock_json):
+        action = self.get_action_instance({})
+
+        test_site_objs = ['site1', 'site2']
+        test_file_path = '/path/to/sites_file.json'
+        test_file_append = False
+        expected_result = 'Output saved to: ' + test_file_path
+
+        m = mock.mock_open(read_data='test data')
+        mock_open.return_value = m.return_value
+
+        result = action.save_sites_list_to_file(test_site_objs, test_file_path, test_file_append)
+
+        self.assertEqual(result, expected_result)
+        mock_json.dump.assert_called_with(['site1', 'site2'], m.return_value)
+        mock_open.assert_called_with(test_file_path, 'w')

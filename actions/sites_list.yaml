@@ -13,6 +13,23 @@ parameters:
     type: string
     description: "Domain for the given username"
     required: true
+  output_file:
+    type: string
+    description: "Path to JSON file that will store a list of sites"
+    required: false
+  output_file_append:
+    type: boolean
+    description: "Whether to append the result to the given file or overwrite it"
+    default: true
+    required: true
+  output_type:
+    type: string
+    description: "Specifies whether to send output to console or save it in a specified file"
+    enum:
+      - console
+      - file
+    required: true
+    default: console
   password:
     type: string
     description: "Password to login to sharepoint"
