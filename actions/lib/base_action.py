@@ -1,4 +1,5 @@
 import requests
+import json
 from requests_ntlm import HttpNtlmAuth
 from st2common.runners.base_action import Action
 
@@ -51,6 +52,30 @@ class SharepointBaseAction(Action):
         """
         login_user = domain + "\\" + username
         return HttpNtlmAuth(login_user, password)
+
+    def save_sites_list_to_file(self, site_objs, file_path, file_append):
+        """Write the given list of sharepoint sites to the specified file
+        :param site_objs: List of Sharepoint site objects
+        :param file_path: Path to the file that will store the list of sites
+        :param file_append: Boolean, if true append sites to end of file otherwise overwrite it
+        """
+        if not file_path:
+            raise 'output_file path must be specified to save output to file.'
+
+        # If appending sites to the file then read in the file first before overwriting it
+        if file_append:
+            file = open(file_path, 'r')
+            sites_list = json.loads(file.read())
+            file.close()
+            sites_list.extend(site_objs)
+        else:
+            sites_list = site_objs
+
+        with open(file_path, 'w') as outfile:
+            json.dump(sites_list, outfile)
+            outfile.close()
+
+        return 'Output saved to: ' + file_path
 
     # Need this method here because of the following error with unit tests
     # TypeError: Can't instantiate class with abstract methods run

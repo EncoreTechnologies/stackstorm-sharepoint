@@ -10,14 +10,20 @@ class DocLibList(SharepointBaseAction):
         """
         super(DocLibList, self).__init__(config)
 
-    def run(self, domain, password, site_url, username):
+    def run(self, domain, output_file, output_file_append, output_type,
+            password, site_url, username):
         """
         Return a list of document libraries on the given site or subsite
 
         Args:
-        - base_url: URL of the base Sharepoint site
         - domain: Domain for the given username
+        - output_file: (Optional) file to save sites output to
+        - output_file_append: Boolean, whether to append the sites list to the
+            given file or overwrite it
+        - output_type: "console" or "file" specifies whether to send output to
+            console or save it in a specified file
         - password: Password to login to sharepoint
+        - site_url: URL of the base Sharepoint site
         - username: Username to login to sharepoint
 
         Returns:
@@ -25,6 +31,10 @@ class DocLibList(SharepointBaseAction):
         """
         user_auth = self.create_auth_cred(domain, username, password)
 
-        result = self.get_doc_libs(site_url, user_auth)
+        doc_libs = self.get_doc_libs(site_url, user_auth)
 
-        return result
+        if output_type == 'file':
+            return self.save_sites_list_to_file(doc_libs, output_file,
+                                                output_file_append)
+
+        return doc_libs

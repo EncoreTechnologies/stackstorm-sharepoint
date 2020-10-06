@@ -33,6 +33,9 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
 
         test_site_url = 'https://test.com'
         test_domain = 'dom'
+        test_output_file = None
+        test_output_file_append = False
+        test_output_type = 'console'
         test_pass = 'pass'
         test_user = 'user'
         test_auth = 'auth'
@@ -43,8 +46,39 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
 
         mock_get_doc_libs.return_value = expected_result
 
-        result = action.run(test_domain, test_pass, test_site_url, test_user)
+        result = action.run(test_domain, test_output_file, test_output_file_append,
+                            test_output_type, test_pass, test_site_url, test_user)
 
         self.assertEqual(result, expected_result)
         mock_auth.assert_called_with(test_domain, test_user, test_pass)
         mock_get_doc_libs.assert_called_with(test_site_url, test_auth)
+
+    @mock.patch('lib.base_action.SharepointBaseAction.get_doc_libs')
+    @mock.patch('lib.base_action.SharepointBaseAction.create_auth_cred')
+    @mock.patch('lib.base_action.SharepointBaseAction.save_sites_list_to_file')
+    def test_run_file(self, mock_save, mock_auth, mock_get_doc_libs):
+        action = self.get_action_instance({})
+
+        test_site_url = 'https://test.com/'
+        test_domain = 'dom'
+        test_output_file = '/path/to/sites_file.json'
+        test_output_file_append = False
+        test_output_type = 'file'
+        test_pass = 'pass'
+        test_user = 'user'
+        test_auth = 'auth'
+        test_doc_libs = ['doc1', 'doc2']
+
+        expected_result = 'result'
+
+        mock_auth.return_value = test_auth
+        mock_get_doc_libs.return_value = test_doc_libs
+        mock_save.return_value = expected_result
+
+        result = action.run(test_domain, test_output_file, test_output_file_append,
+                            test_output_type, test_pass, test_site_url, test_user)
+
+        self.assertEqual(result, expected_result)
+        mock_auth.assert_called_with(test_domain, test_user, test_pass)
+        mock_get_doc_libs.assert_called_with(test_site_url, test_auth)
+        mock_save.assert_called_with(test_doc_libs, test_output_file, test_output_file_append)
