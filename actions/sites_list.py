@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import urlparse
+from urllib.parse import urljoin
 from lib.base_action import SharepointBaseAction
 
 
@@ -34,7 +34,7 @@ class SitesList(SharepointBaseAction):
     def get_sites_list(self, base_url, ntlm_auth):
         endpoint_uri = '/_api/search/query?querytext=\'contentclass:STS_Site\''
 
-        result = self.rest_request(urlparse.urljoin(base_url, endpoint_uri), ntlm_auth)
+        result = self.rest_request(urljoin(base_url, endpoint_uri), ntlm_auth)
         parents = (result.json()['d']['query']['PrimaryQueryResult']['RelevantResults']
                    ['Table']['Rows']['results'])
 

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import urlparse
+from urllib.parse import urljoin
 from lib.base_action import SharepointBaseAction
 
 
@@ -14,7 +14,7 @@ class SubsitesList(SharepointBaseAction):
     # Return the ID of the Parent site
     def get_parent_site(self, base_url, ntlm_auth, subsite=''):
         endpoint_uri = '/_api/web/parentweb'
-        parent = self.rest_request(urlparse.urljoin(base_url, subsite + endpoint_uri), ntlm_auth)
+        parent = self.rest_request(urljoin(base_url, subsite + endpoint_uri), ntlm_auth)
         return parent.json()['d']['Id']
 
     def get_sites_list(self, base_url, ntlm_auth, endpoint=''):
@@ -23,11 +23,11 @@ class SubsitesList(SharepointBaseAction):
                        '(nwebtemplatefilter=-1,nconfigurationfilter=0)'
         site_list = []
 
-        result = self.rest_request(urlparse.urljoin(base_url, endpoint + endpoint_uri), ntlm_auth)
+        result = self.rest_request(urljoin(base_url, endpoint + endpoint_uri), ntlm_auth)
         for element in result.json()['d']['results']:
             subsite = element['ServerRelativeUrl']
             element['ParentId'] = self.get_parent_site(base_url, ntlm_auth, subsite)
-            site_url = urlparse.urljoin(base_url, subsite).encode('utf-8')
+            site_url = urljoin(base_url, subsite)
             # Add a list of each sites Document Libraries
             element['DocLibs'] = self.get_doc_libs(site_url, ntlm_auth)
             element['SiteUrl'] = site_url
