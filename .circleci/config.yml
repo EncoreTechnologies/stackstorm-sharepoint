@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  build_test_deploy:
+  build_and_test:
     docker:
       - image: circleci/python:3.6
       - image: rabbitmq:3
