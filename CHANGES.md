@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.2.0
+
+- Updated pack and actions to work with Python3
+
 ## 1.1.0
 
 - Updated the sites_list, subsites_list, and doc_lib_list actions to optionally save outputs to files.

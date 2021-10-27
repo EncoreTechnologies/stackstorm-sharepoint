@@ -26,7 +26,7 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
         action = self.get_action_instance({})
         self.assertIsInstance(action, SitesList)
 
-    @mock.patch('sites_list.urlparse.urljoin')
+    @mock.patch('sites_list.urljoin')
     @mock.patch('lib.base_action.SharepointBaseAction.rest_request')
     def test_get_sites_list(self, mock_request, mock_urljoin):
         action = self.get_action_instance({})
