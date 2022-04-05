@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.0
+
+- Moving to GitHub Actions from CircleCi
+
+Contributed by Bradley Bishop (Encore Technologies)
+
 ## 1.2.0
 
 - Updated pack and actions to work with Python3
