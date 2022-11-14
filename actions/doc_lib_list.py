@@ -42,7 +42,7 @@ class DocLibList(SharepointBaseAction):
         Returns:
         - List: List of Sharepoint sites and subsites
         """
-        user_auth = self.create_auth_cred(domain, username, password)
+        user_auth = self.create_ntlm_auth_cred(domain, username, password)
 
         doc_libs = self.get_doc_libs(site_url, user_auth)
 

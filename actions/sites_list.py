@@ -81,7 +81,7 @@ class SitesList(SharepointBaseAction):
         - List: List of Sharepoint sites and subsites if output_type is "console"
         - String: Path to the output file if output_type is "file"
         """
-        user_auth = self.create_auth_cred(domain, username, password)
+        user_auth = self.create_ntlm_auth_cred(domain, username, password)
 
         sites_list = self.get_sites_list(base_url, user_auth)
         site_objs = self.get_site_objects(base_url, user_auth, sites_list)
