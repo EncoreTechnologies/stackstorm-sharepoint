@@ -14,8 +14,8 @@
 # limitations under the License.
 import requests
 import json
-from requests_ntlm import HttpNtlmAuth
 from st2common.runners.base_action import Action
+from msal.oauth2cli import JwtAssertionCreator
 
 
 class SharepointBaseAction(Action):
@@ -27,45 +27,70 @@ class SharepointBaseAction(Action):
         """
         super(SharepointBaseAction, self).__init__(config)
 
-    def get_doc_libs(self, base_url, ntlm_auth):
+    def get_doc_libs(self, base_url, token):
         # Endpoint to return lists filtered for document libraries
         # The base template 101 is for document libraries
         # https://docs.microsoft.com/en-us/previous-versions/office/
         # sharepoint-server/ee541191(v=office.15)
         endpoint_uri = '/_api/web/lists?$filter=BaseTemplate eq ' \
                        '101&$select=Title,Id,DocumentTemplateUrl'
-        result = self.rest_request(base_url + endpoint_uri, ntlm_auth)
+        result = self.rest_request(base_url + endpoint_uri, token)
 
         return result.json()['d']['results']
 
-    def rest_request(self, endpoint, ntlm_auth, method='GET',
+    def rest_request(self, endpoint, token, method='GET',
                      payload=None, ssl_verify=False):
         """Establish a connection with the sharepoint url and return the results
         :param endpoint: Sharepooint endpoint to connect to
-        :param ntlm_auth: NTLM auth objectto make the request
         :returns: result from the rest request
         """
         headers = {
             'accept': 'application/json;odata=verbose',
             'content-type': 'application/json;odata=verbose',
             'odata': 'verbose',
-            'X-RequestForceAuthentication': 'true'
+            'X-RequestForceAuthentication': 'true',
+            'Authorization': "Bearer {0}".format(token)
         }
 
-        result = requests.request(method, endpoint, auth=ntlm_auth, data=payload,
+        result = requests.request(method, endpoint, data=payload,
                                   headers=headers, verify=ssl_verify)
 
         return result
 
-    def create_auth_cred(self, domain, username, password):
+    def create_auth_cred(self, rsa_private_key, cert_thumbprint, tenent_id, client_id, site_url):
         """Create and return an NTLM auth object which will be used to make REST requests
         :param domain: Domain for the given username
         :param password: Password to login to sharepoint
         :param username: Username to login to sharepoint
         :returns: NTLM auth object to make REST requests
         """
-        login_user = domain + "\\" + username
-        return HttpNtlmAuth(login_user, password)
+        assertion = JwtAssertionCreator(
+            rsa_private_key,
+            algorithm="RS256",
+            sha1_thumbprint=cert_thumbprint,
+            headers={}
+        )
+
+        token_endpoint = "https://login.microsoftonline.com/{0}/oauth2/v2.0/token".format(tenent_id)
+
+        client_assertion = assertion.create_normal_assertion(
+            audience=token_endpoint,
+            issuer=client_id
+        )
+
+        token_scope = "{0}/.default".format(site_url)
+
+        token_payload = {
+            'client_id': client_id,
+            'scope': token_scope,
+            'grant_type': 'client_credentials',
+            'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+            'client_assertion': client_assertion
+        }
+
+        token_response = requests.request('POST', token_endpoint, data=token_payload)
+
+        return token_response['access_token']
 
     def save_sites_list_to_file(self, site_objs, file_path, file_append):
         """Write the given list of sharepoint sites to the specified file
