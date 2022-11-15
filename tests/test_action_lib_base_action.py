@@ -34,6 +34,7 @@ class SharePointBaseActionTestCase(BaseActionTestCase):
     @mock.patch('lib.base_action.SharepointBaseAction.rest_request')
     def test_get_doc_libs(self, mock_request):
         action = self.get_action_instance({})
+        action.token_auth = False
 
         test_base_url = 'https://test.com/api'
         test_auth = 'user'
@@ -61,6 +62,7 @@ class SharePointBaseActionTestCase(BaseActionTestCase):
     @mock.patch('lib.base_action.requests.request')
     def test_rest_request(self, mock_request):
         action = self.get_action_instance({})
+        action.token_auth = False
 
         test_headers = {
             'accept': 'application/json;odata=verbose',
@@ -88,7 +90,7 @@ class SharePointBaseActionTestCase(BaseActionTestCase):
                                         headers=test_headers, verify=test_verify)
 
     @mock.patch('lib.base_action.HttpNtlmAuth')
-    def test_create_auth_cred(self, mock_auth):
+    def test_create_ntlm_auth_cred(self, mock_auth):
         action = self.get_action_instance({})
 
         test_domain = 'dom'
@@ -98,7 +100,7 @@ class SharePointBaseActionTestCase(BaseActionTestCase):
 
         mock_auth.return_value = test_auth
 
-        result = action.create_auth_cred(test_domain, test_user, test_pass)
+        result = action.create_ntlm_auth_cred(test_domain, test_user, test_pass)
 
         self.assertEqual(result, test_auth)
         mock_auth.assert_called_with(test_domain + '\\' + test_user, test_pass)

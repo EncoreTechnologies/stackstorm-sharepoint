@@ -30,6 +30,7 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
     @mock.patch('lib.base_action.SharepointBaseAction.rest_request')
     def test_get_sites_list(self, mock_request, mock_urljoin):
         action = self.get_action_instance({})
+        action.token_auth = False
 
         test_base_url = 'https://test.com/'
         test_auth = 'user'
@@ -72,6 +73,7 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
     @mock.patch('lib.base_action.SharepointBaseAction.rest_request')
     def test_get_site_objects(self, mock_request, mock_get_doc_libs):
         action = self.get_action_instance({})
+        action.token_auth = False
 
         test_base_url = 'https://test.com'
         test_auth = 'user'
@@ -137,9 +139,10 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
 
     @mock.patch('sites_list.SitesList.get_sites_list')
     @mock.patch('sites_list.SitesList.get_site_objects')
-    @mock.patch('lib.base_action.SharepointBaseAction.create_auth_cred')
+    @mock.patch('lib.base_action.SharepointBaseAction.create_ntlm_auth_cred')
     def test_run(self, mock_auth, mock_get_site_objects, mock_get_sites_list):
         action = self.get_action_instance({})
+        action.token_auth = False
 
         test_base_url = 'https://test.com/'
         test_domain = 'dom'
@@ -150,6 +153,10 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
         test_user = 'user'
         test_auth = 'auth'
         test_site_list = ['site1', 'site2']
+        test_rsa_private_key = 'rsa_test'
+        test_cert_thumbprint = 'cert_test'
+        test_tenent_id = '123abc'
+        test_client_id = '456dfg'
 
         expected_result = 'result'
 
@@ -159,7 +166,9 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
         mock_get_sites_list.return_value = test_site_list
 
         result = action.run(test_base_url, test_domain, test_output_file, test_output_file_append,
-                            test_output_type, test_pass, test_user)
+                            test_output_type, test_pass, test_user, False,
+                            test_rsa_private_key, test_cert_thumbprint, test_tenent_id,
+                            test_client_id)
 
         self.assertEqual(result, expected_result)
         mock_auth.assert_called_with(test_domain, test_user, test_pass)
@@ -168,7 +177,7 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
 
     @mock.patch('sites_list.SitesList.get_sites_list')
     @mock.patch('sites_list.SitesList.get_site_objects')
-    @mock.patch('lib.base_action.SharepointBaseAction.create_auth_cred')
+    @mock.patch('lib.base_action.SharepointBaseAction.create_ntlm_auth_cred')
     @mock.patch('lib.base_action.SharepointBaseAction.save_sites_list_to_file')
     def test_run_file(self, mock_save, mock_auth, mock_get_site_objects, mock_get_sites_list):
         action = self.get_action_instance({})
@@ -183,6 +192,10 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
         test_auth = 'auth'
         test_site_list = ['site1', 'site2']
         test_site_object = {'site': 'object'}
+        test_rsa_private_key = 'rsa_test'
+        test_cert_thumbprint = 'cert_test'
+        test_tenent_id = '123abc'
+        test_client_id = '456dfg'
 
         expected_result = 'result'
 
@@ -193,7 +206,9 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
         mock_save.return_value = expected_result
 
         result = action.run(test_base_url, test_domain, test_output_file, test_output_file_append,
-                            test_output_type, test_pass, test_user)
+                            test_output_type, test_pass, test_user, False,
+                            test_rsa_private_key, test_cert_thumbprint, test_tenent_id,
+                            test_client_id)
 
         self.assertEqual(result, expected_result)
         mock_auth.assert_called_with(test_domain, test_user, test_pass)

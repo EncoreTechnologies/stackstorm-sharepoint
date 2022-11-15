@@ -27,6 +27,7 @@ class SharepointBaseAction(Action):
         :returns: a new BaseAction
         """
         super(SharepointBaseAction, self).__init__(config)
+        self.token_auth = False
 
     def get_doc_libs(self, base_url, auth_token):
         # Endpoint to return lists filtered for document libraries
@@ -52,17 +53,22 @@ class SharepointBaseAction(Action):
             'X-RequestForceAuthentication': 'true'
         }
 
-        if 'test':
+        if self.token_auth:
             headers['Authorization'] = "Bearer {0}".format(auth_token)
             result = requests.request(method, endpoint, data=payload,
                                       headers=headers, verify=ssl_verify)
         else:
-            result = requests.request(method, endpoint, auth=ntlm_auth, data=payload,
+            result = requests.request(method, endpoint, auth=auth_token, data=payload,
                                       headers=headers, verify=ssl_verify)
 
         return result
 
-    def create_token_auth_cred(self, rsa_private_key, cert_thumbprint, tenent_id, client_id, site_url):
+    def create_token_auth_cred(self,
+                               rsa_private_key,
+                               cert_thumbprint,
+                               tenent_id,
+                               client_id,
+                               site_url):
         """Create and return an NTLM auth object which will be used to make REST requests
         :param domain: Domain for the given username
         :param password: Password to login to sharepoint

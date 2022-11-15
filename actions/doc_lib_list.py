@@ -24,7 +24,8 @@ class DocLibList(SharepointBaseAction):
         super(DocLibList, self).__init__(config)
 
     def run(self, domain, output_file, output_file_append, output_type,
-            password, site_url, username):
+            password, site_url, username, token_auth, rsa_private_key,
+            cert_thumbprint, tenent_id, client_id):
         """
         Return a list of document libraries on the given site or subsite
 
@@ -42,7 +43,16 @@ class DocLibList(SharepointBaseAction):
         Returns:
         - List: List of Sharepoint sites and subsites
         """
-        user_auth = self.create_ntlm_auth_cred(domain, username, password)
+        self.token_auth = token_auth
+
+        if self.token_auth:
+            user_auth = self.create_token_auth_cred(rsa_private_key,
+                                                    cert_thumbprint,
+                                                    tenent_id,
+                                                    client_id,
+                                                    site_url)
+        else:
+            user_auth = self.create_ntlm_auth_cred(domain, username, password)
 
         doc_libs = self.get_doc_libs(site_url, user_auth)
 
