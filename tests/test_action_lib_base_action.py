@@ -105,6 +105,55 @@ class SharePointBaseActionTestCase(BaseActionTestCase):
         self.assertEqual(result, test_auth)
         mock_auth.assert_called_with(test_domain + '\\' + test_user, test_pass)
 
+    @mock.patch('lib.base_action.JwtAssertionCreator')
+    @mock.patch('lib.base_action.requests.request')
+    def test_create_token_auth_cred(self, mock_request, mock_auth):
+        action = self.get_action_instance({})
+
+        test_rsa_private_key = 'rsa_test'
+        test_cert_thumbprint = 'cert_test'
+        test_tenent_id = '123abc'
+        test_client_id = '456dfg'
+        test_base_url = 'https://test.com/'
+        jwt_token = 'test1234567'
+        test_scope = "{0}/.default".format(test_base_url)
+        expected_output = 'auth_token'
+        token_endpoint = ("https://login.microsoftonline.com/{0}"
+                          "/oauth2/v2.0/token".format(test_tenent_id))
+        test_payload = {
+            'client_id': test_client_id,
+            'scope': test_scope,
+            'grant_type': 'client_credentials',
+            'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+            'client_assertion': jwt_token
+        }
+
+        mock_jwt_creater = mock.MagicMock()
+        mock_auth.return_value = mock_jwt_creater
+        mock_jwt_creater.create_normal_assertion.return_value = jwt_token
+
+        mock_rest_return = mock.MagicMock()
+        mock_request.return_value = mock_rest_return
+        mock_rest_return.raise_for_status.return_value = True
+        mock_rest_return.json.return_value = {'access_token': expected_output}
+
+        result = action.create_token_auth_cred(test_rsa_private_key,
+                                               test_cert_thumbprint,
+                                               test_tenent_id,
+                                               test_client_id,
+                                               test_base_url)
+
+        self.assertEqual(result, expected_output)
+        mock_auth.assert_called_with(test_rsa_private_key,
+                                     algorithm="RS256",
+                                     sha1_thumbprint=test_cert_thumbprint,
+                                     headers={})
+        mock_jwt_creater.create_normal_assertion.assert_called_with(audience=token_endpoint,
+                                                                    issuer=test_client_id)
+        mock_request.assert_called_with('POST',
+                                        token_endpoint,
+                                        data=test_payload)
+
     @mock.patch("lib.base_action.json")
     @mock.patch("lib.base_action.open")
     def test_save_sites_list_to_file_append(self, mock_open, mock_json):

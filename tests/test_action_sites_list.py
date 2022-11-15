@@ -177,6 +177,48 @@ class SharepointSitesListTest(SharePointBaseActionTestCase):
 
     @mock.patch('sites_list.SitesList.get_sites_list')
     @mock.patch('sites_list.SitesList.get_site_objects')
+    @mock.patch('lib.base_action.SharepointBaseAction.create_token_auth_cred')
+    def test_run_token(self, mock_auth, mock_get_site_objects, mock_get_sites_list):
+        action = self.get_action_instance({})
+        action.token_auth = False
+
+        test_base_url = 'https://test.com/'
+        test_domain = 'dom'
+        test_output_file = None
+        test_output_file_append = False
+        test_output_type = 'console'
+        test_pass = 'pass'
+        test_user = 'user'
+        test_auth = 'auth'
+        test_site_list = ['site1', 'site2']
+        test_rsa_private_key = 'rsa_test'
+        test_cert_thumbprint = 'cert_test'
+        test_tenent_id = '123abc'
+        test_client_id = '456dfg'
+
+        expected_result = 'result'
+
+        mock_auth.return_value = test_auth
+
+        mock_get_site_objects.return_value = expected_result
+        mock_get_sites_list.return_value = test_site_list
+
+        result = action.run(test_base_url, test_domain, test_output_file, test_output_file_append,
+                            test_output_type, test_pass, test_user, True,
+                            test_rsa_private_key, test_cert_thumbprint, test_tenent_id,
+                            test_client_id)
+
+        self.assertEqual(result, expected_result)
+        mock_auth.assert_called_with(test_rsa_private_key,
+                                     test_cert_thumbprint,
+                                     test_tenent_id,
+                                     test_client_id,
+                                     test_base_url)
+        mock_get_sites_list.assert_called_with(test_base_url, test_auth)
+        mock_get_site_objects.assert_called_with(test_base_url, test_auth, test_site_list)
+
+    @mock.patch('sites_list.SitesList.get_sites_list')
+    @mock.patch('sites_list.SitesList.get_site_objects')
     @mock.patch('lib.base_action.SharepointBaseAction.create_ntlm_auth_cred')
     @mock.patch('lib.base_action.SharepointBaseAction.save_sites_list_to_file')
     def test_run_file(self, mock_save, mock_auth, mock_get_site_objects, mock_get_sites_list):
