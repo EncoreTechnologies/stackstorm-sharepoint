@@ -52,7 +52,8 @@ class SubsitesList(SharepointBaseAction):
         return site_list
 
     def run(self, base_url, domain, endpoint, output_file, output_file_append,
-            output_type, password, username):
+            output_type, password, username, token_auth, rsa_private_key,
+            cert_thumbprint, tenent_id, client_id):
         """
         Return a list of subsites on the given base site
 
@@ -72,7 +73,16 @@ class SubsitesList(SharepointBaseAction):
         - List: List of Sharepoint sites and subsites if output_type is "console"
         - String: Path to the output file if output_type is "file"
         """
-        user_auth = self.create_auth_cred(domain, username, password)
+        self.token_auth = token_auth
+
+        if self.token_auth:
+            user_auth = self.create_token_auth_cred(rsa_private_key,
+                                                    cert_thumbprint,
+                                                    tenent_id,
+                                                    client_id,
+                                                    base_url)
+        else:
+            user_auth = self.create_ntlm_auth_cred(domain, username, password)
 
         site_objs = self.get_sites_list(base_url, user_auth, endpoint)
 
