@@ -14,8 +14,9 @@
 # limitations under the License.
 import requests
 import json
-from requests_ntlm import HttpNtlmAuth
 from st2common.runners.base_action import Action
+from msal.oauth2cli import JwtAssertionCreator
+from requests_ntlm import HttpNtlmAuth
 
 
 class SharepointBaseAction(Action):
@@ -26,23 +27,23 @@ class SharepointBaseAction(Action):
         :returns: a new BaseAction
         """
         super(SharepointBaseAction, self).__init__(config)
+        self.token_auth = False
 
-    def get_doc_libs(self, base_url, ntlm_auth):
+    def get_doc_libs(self, base_url, auth_token):
         # Endpoint to return lists filtered for document libraries
         # The base template 101 is for document libraries
         # https://docs.microsoft.com/en-us/previous-versions/office/
         # sharepoint-server/ee541191(v=office.15)
         endpoint_uri = '/_api/web/lists?$filter=BaseTemplate eq ' \
                        '101&$select=Title,Id,DocumentTemplateUrl'
-        result = self.rest_request(base_url + endpoint_uri, ntlm_auth)
+        result = self.rest_request(base_url + endpoint_uri, auth_token)
 
         return result.json()['d']['results']
 
-    def rest_request(self, endpoint, ntlm_auth, method='GET',
+    def rest_request(self, endpoint, auth_token, method='GET',
                      payload=None, ssl_verify=False):
         """Establish a connection with the sharepoint url and return the results
         :param endpoint: Sharepooint endpoint to connect to
-        :param ntlm_auth: NTLM auth objectto make the request
         :returns: result from the rest request
         """
         headers = {
@@ -52,12 +53,61 @@ class SharepointBaseAction(Action):
             'X-RequestForceAuthentication': 'true'
         }
 
-        result = requests.request(method, endpoint, auth=ntlm_auth, data=payload,
-                                  headers=headers, verify=ssl_verify)
+        if self.token_auth:
+            headers['Authorization'] = "Bearer {0}".format(auth_token)
+            result = requests.request(method, endpoint, data=payload,
+                                      headers=headers, verify=ssl_verify)
+        else:
+            result = requests.request(method, endpoint, auth=auth_token, data=payload,
+                                      headers=headers, verify=ssl_verify)
 
         return result
 
-    def create_auth_cred(self, domain, username, password):
+    def create_token_auth_cred(self,
+                               rsa_private_key,
+                               cert_thumbprint,
+                               tenent_id,
+                               client_id,
+                               site_url):
+        """Create and return an NTLM auth object which will be used to make REST requests
+        :param domain: Domain for the given username
+        :param password: Password to login to sharepoint
+        :param username: Username to login to sharepoint
+        :returns: NTLM auth object to make REST requests
+        """
+        assertion = JwtAssertionCreator(
+            rsa_private_key,
+            algorithm="RS256",
+            sha1_thumbprint=cert_thumbprint,
+            headers={}
+        )
+
+        token_endpoint = "https://login.microsoftonline.com/{0}/oauth2/v2.0/token".format(tenent_id)
+
+        client_assertion = assertion.create_normal_assertion(
+            audience=token_endpoint,
+            issuer=client_id
+        )
+
+        token_scope = "{0}/.default".format(site_url)
+
+        print(client_assertion)
+
+        token_payload = {
+            'client_id': client_id,
+            'scope': token_scope,
+            'grant_type': 'client_credentials',
+            'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+            'client_assertion': client_assertion
+        }
+
+        token_response = requests.request('POST', token_endpoint, data=token_payload)
+
+        token_response.raise_for_status()
+
+        return token_response.json()['access_token']
+
+    def create_ntlm_auth_cred(self, domain, username, password):
         """Create and return an NTLM auth object which will be used to make REST requests
         :param domain: Domain for the given username
         :param password: Password to login to sharepoint
@@ -95,3 +145,4 @@ class SharepointBaseAction(Action):
     # TypeError: Can't instantiate class with abstract methods run
     def run(self, **kwargs):
         raise RuntimeError("run() not implemented")
+

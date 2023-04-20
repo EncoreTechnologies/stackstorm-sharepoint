@@ -33,9 +33,32 @@ parameters:
   password:
     type: string
     description: "Password to login to sharepoint"
-    required: true
+    required: false
     secret: true
   username:
     type: string
     description: "Username to login to sharepoint"
-    required: true
+    required: false
+  token_auth:
+    type: boolean
+    description: "If token auth should be used."
+    default: false
+  rsa_private_key:
+    type: string
+    description: "RSA Private key to use with the RSA Certificate."
+    required: false
+    secret: true
+  cert_thumbprint:
+    type: string
+    description: "Thumbprint of the certificate uploaded in Azure"
+    required: false
+    secret: true
+  tenent_id:
+    type: string
+    description: "Tenent ID of Azure. Used for token auth"
+    required: false
+    secret: true
+  client_id:
+    type: string
+    description: "Client ID of the App in Azure. Also called App ID"
+    required: false

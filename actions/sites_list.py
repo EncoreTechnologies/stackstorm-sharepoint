@@ -14,6 +14,8 @@
 # limitations under the License.
 from urllib.parse import urljoin
 from lib.base_action import SharepointBaseAction
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class SitesList(SharepointBaseAction):
@@ -62,7 +64,8 @@ class SitesList(SharepointBaseAction):
         return site_urls
 
     def run(self, base_url, domain, output_file, output_file_append,
-            output_type, password, username):
+            output_type, password, username, token_auth, rsa_private_key,
+            cert_thumbprint, tenent_id, client_id):
         """
         Return a list of subsites on the given base site
 
@@ -81,14 +84,24 @@ class SitesList(SharepointBaseAction):
         - List: List of Sharepoint sites and subsites if output_type is "console"
         - String: Path to the output file if output_type is "file"
         """
-        user_auth = self.create_auth_cred(domain, username, password)
+        self.token_auth = token_auth
+
+        if self.token_auth:
+            user_auth = self.create_token_auth_cred(rsa_private_key,
+                                                    cert_thumbprint,
+                                                    tenent_id,
+                                                    client_id,
+                                                    base_url)
+        else:
+            user_auth = self.create_ntlm_auth_cred(domain, username, password)
 
         sites_list = self.get_sites_list(base_url, user_auth)
         site_objs = self.get_site_objects(base_url, user_auth, sites_list)
 
         # If the output type is file then return a string with the path to the file
         if output_type == 'file':
-            return self.save_sites_list_to_file(site_objs, output_file,
-                                                output_file_append)
+            self.save_sites_list_to_file(site_objs, output_file,
+                                         output_file_append)
 
         return site_objs
+
