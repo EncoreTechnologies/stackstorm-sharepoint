@@ -124,7 +124,7 @@ class SharepointBaseAction(Action):
         :param file_append: Boolean, if true append sites to end of file otherwise overwrite it
         """
         if not file_path:
-            raise 'output_file path must be specified to save output to file.'
+            raise ValueError('output_file path must be specified to save output to file.')
 
         # If appending sites to the file then read in the file first before overwriting it
         if file_append:
@@ -145,4 +145,3 @@ class SharepointBaseAction(Action):
     # TypeError: Can't instantiate class with abstract methods run
     def run(self, **kwargs):
         raise RuntimeError("run() not implemented")
-

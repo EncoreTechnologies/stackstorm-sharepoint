@@ -39,33 +39,44 @@ class SitesList(SharepointBaseAction):
             base['DocLibs'] = self.get_doc_libs(site, ntlm_auth)
             base['SiteUrl'] = site
             base['Endpoint'] = '' if site == base_url else site.split(base_url)[1]
-            base['ParentId'] = None
+            base['Guid'] = base['Id'] + base['ServerRelativeUrl']
+            base['ParentGuid'] = None
 
             site_objs.append(base)
 
         return site_objs
 
     # Return a list of SharePoint top level site URLs
-    def get_sites_list(self, base_url, ntlm_auth):
+    def get_sites_list(self, base_url, ntlm_auth, sites_filter):
         endpoint_uri = '/_api/search/query?querytext=\'contentclass:STS_Site\''
 
         result = self.rest_request(urljoin(base_url, endpoint_uri), ntlm_auth)
-        parents = (result.json()['d']['query']['PrimaryQueryResult']['RelevantResults']
-                   ['Table']['Rows']['results'])
-
-        # Parse the response to get a list of the base site URLs
+        row_count = (result.json()['d']['query']['PrimaryQueryResult']['RelevantResults']
+                     ['TotalRows'])
+        start_row = 0
         site_urls = []
-        for site in parents:
-            # Save the name of the site from the SiteName key
-            for cell in site['Cells']['results']:
-                if cell['Key'] == 'SiteName':
-                    site_urls.append(cell['Value'])
+        while(start_row < row_count):
+            endpoint_page = endpoint_uri + '&rowlimit=500&startrow=' + str(start_row)
+
+            result = self.rest_request(urljoin(base_url, endpoint_page), ntlm_auth)
+            parents = (result.json()['d']['query']['PrimaryQueryResult']['RelevantResults']
+                       ['Table']['Rows']['results'])
+
+            # Parse the response to get a list of the base site URLs
+            for site in parents:
+                # Save the name of the site from the SiteName key
+                for cell in site['Cells']['results']:
+                    if cell['Key'] == 'SiteName':
+                        if cell['Value'].lower() in sites_filter:
+                            site_urls.append(cell['Value'])
+
+            start_row += 500
 
         return site_urls
 
     def run(self, base_url, domain, output_file, output_file_append,
             output_type, password, username, token_auth, rsa_private_key,
-            cert_thumbprint, tenent_id, client_id):
+            cert_thumbprint, tenent_id, client_id, sites_filter):
         """
         Return a list of subsites on the given base site
 
@@ -95,13 +106,16 @@ class SitesList(SharepointBaseAction):
         else:
             user_auth = self.create_ntlm_auth_cred(domain, username, password)
 
-        sites_list = self.get_sites_list(base_url, user_auth)
+        # Convert to a set to remove dulicates
+        my_set = set(sites_filter)
+        sites_filter = list(my_set)
+        sites_filter = [site.lower() for site in sites_filter]
+
+        sites_list = self.get_sites_list(base_url, user_auth, sites_filter)
         site_objs = self.get_site_objects(base_url, user_auth, sites_list)
 
         # If the output type is file then return a string with the path to the file
         if output_type == 'file':
             self.save_sites_list_to_file(site_objs, output_file,
                                          output_file_append)
-
         return site_objs
-

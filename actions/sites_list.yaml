@@ -62,3 +62,7 @@ parameters:
     type: string
     description: "Client ID of the App in Azure. Also called App ID"
     required: false
+  sites_filter:
+    type: array
+    description: "List of sharepoint site URLs to return information for"
+    required: false
