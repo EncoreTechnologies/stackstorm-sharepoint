@@ -24,11 +24,11 @@ class SubsitesList(SharepointBaseAction):
         """
         super(SubsitesList, self).__init__(config)
 
-    # Return the ID of the Parent site
+    # Create and return a GUID for the Parent site
     def get_parent_site(self, base_url, ntlm_auth, subsite=''):
         endpoint_uri = '/_api/web/parentweb'
         parent = self.rest_request(urljoin(base_url, subsite + endpoint_uri), ntlm_auth)
-        return parent.json()['d']['Id']
+        return parent.json()['d']['Id'] + parent.json()['d']['ServerRelativeUrl']
 
     def get_sites_list(self, base_url, ntlm_auth, endpoint=''):
         # Appending the following to the endpoint to get a list of subsites
@@ -37,9 +37,23 @@ class SubsitesList(SharepointBaseAction):
         site_list = []
 
         result = self.rest_request(urljoin(base_url, endpoint + endpoint_uri), ntlm_auth)
+        # Verify that a result was returned by the request
+        try:
+            if len(result.json()['d']['results']) == 0:
+                return site_list
+        except:
+            return site_list
+
         for element in result.json()['d']['results']:
             subsite = element['ServerRelativeUrl']
-            element['ParentId'] = self.get_parent_site(base_url, ntlm_auth, subsite)
+
+            try:
+                # Need to save a new GUID field because sharepoint site IDs are not unique
+                element['Guid'] = element['Id'] + element['ServerRelativeUrl']
+                element['ParentGuid'] = self.get_parent_site(base_url, ntlm_auth, subsite)
+            except:
+                continue
+
             site_url = urljoin(base_url, subsite)
             # Add a list of each sites Document Libraries
             element['DocLibs'] = self.get_doc_libs(site_url, ntlm_auth)
@@ -52,7 +66,8 @@ class SubsitesList(SharepointBaseAction):
         return site_list
 
     def run(self, base_url, domain, endpoint, output_file, output_file_append,
-            output_type, password, username):
+            output_type, password, username, token_auth, rsa_private_key,
+            cert_thumbprint, tenent_id, client_id):
         """
         Return a list of subsites on the given base site
 
@@ -72,7 +87,16 @@ class SubsitesList(SharepointBaseAction):
         - List: List of Sharepoint sites and subsites if output_type is "console"
         - String: Path to the output file if output_type is "file"
         """
-        user_auth = self.create_auth_cred(domain, username, password)
+        self.token_auth = token_auth
+
+        if self.token_auth:
+            user_auth = self.create_token_auth_cred(rsa_private_key,
+                                                    cert_thumbprint,
+                                                    tenent_id,
+                                                    client_id,
+                                                    base_url)
+        else:
+            user_auth = self.create_ntlm_auth_cred(domain, username, password)
 
         site_objs = self.get_sites_list(base_url, user_auth, endpoint)
 

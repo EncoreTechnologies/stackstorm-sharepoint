@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.4.0
+
+- Added token authentication for use with Azure AD Oauth.
+
+Contributed by Bradley Bishop (Encore Technologies)
+
 ## 1.3.0
 
 - Moving to GitHub Actions from CircleCi
